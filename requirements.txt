@@ -6,7 +6,7 @@ torch
 transformers
 sentence-transformers
 PyPDF2>=3.0.0
-shutil
+#shutil
 openai>=1.0.0
 chromadb>=0.4.15
 python-docx>=0.8.11

@@ -217,8 +217,8 @@ class SimpleRAGTkApp:
                 self.agent = RAGAgent(
                     docs_dir=docs_dir,
                     persist_dir=db_dir,
-                    api_base="填写api接口",
-                    api_key="填写api密钥"
+                    api_base="https://api.ai-gaochao.cn/v1",
+                    api_key="sk-LJnOebUUtdz3fZ5V2a3eD48a810c41BfBe7000183bCa0cCf"
                 )
                 
                 self.update_status("知识库已成功加载！", "green")

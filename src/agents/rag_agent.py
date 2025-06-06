@@ -45,7 +45,7 @@ class RAGAgent:
         os.makedirs(persist_dir, exist_ok=True)
         
         # 初始化组件
-        self.embeddings = HuggingFaceEmbeddings(model_name="d:/code/python/rag-knowledge-base/models/all-MiniLM-L6-v2")
+        self.embeddings = HuggingFaceEmbeddings(model_name="E:/code/python/rag-knowledge-base/models/all-MiniLM-L6-v2")
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
@@ -159,3 +159,6 @@ class RAGAgent:
             import shutil
             shutil.rmtree(self.persist_dir)
         self.vector_store = self._initialize_vector_store()
+def get_completion(self, prompt):
+        '''使用LLM获取对提示的响应'''
+        return self.llm.predict(prompt)
