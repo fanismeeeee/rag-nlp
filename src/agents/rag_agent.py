@@ -159,6 +159,6 @@ class RAGAgent:
             import shutil
             shutil.rmtree(self.persist_dir)
         self.vector_store = self._initialize_vector_store()
-def get_completion(self, prompt):
+    def get_completion(self, prompt):
         '''使用LLM获取对提示的响应'''
         return self.llm.predict(prompt)

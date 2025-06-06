@@ -23,8 +23,7 @@ def show_menu():
     print("7. 启动原生Tk图形界面")
     print("8. 修复所有警告和错误")
     print("9. 修复NumPy兼容性问题")
-    print("10. 使用安全启动器启动GUI")
-    print("11. 使用全新修复版RAG代理")
+    print("10. 使用全新修复版RAG代理")
     print("0. 退出")
     
     choice = input("\n请输入选项编号 [0-11]: ")
@@ -60,14 +59,12 @@ def main():
         elif choice == "6":
             execute_script("rag_app.py", "启动命令行问答系统")
         elif choice == "7":
-            execute_script("simple_gui_tk.py", "启动原生Tk图形界面")
+            execute_script("simple_gui_pyside.py", "启动原生Tk图形界面")
         elif choice == "8":
             execute_script("tools/fix_all_warnings.py", "修复所有警告和错误")
         elif choice == "9":
             execute_script("tools/fix_numpy_compatibility.py", "修复NumPy兼容性问题")
         elif choice == "10":
-            execute_script("start_gui.py", "使用安全启动器启动GUI")
-        elif choice == "11":
             execute_script("tools/use_fixed_agent.py", "应用全新修复版RAG代理")
         elif choice == "0":
             print("\n谢谢使用，再见！")

@@ -64,7 +64,7 @@ def main():
         
         # 创建RAG代理并处理文档
         print("开始构建新知识库...")
-        agent = RAGAgent(docs_dir=docs_dir, persist_dir=db_dir)
+        agent = RAGAgent(docs_dir=docs_dir, persist_dir=db_dir,api_base="https://api.ai-gaochao.cn/v1",api_key="sk-LJnOebUUtdz3fZ5V2a3eD48a810c41BfBe7000183bCa0cCf")
         print("知识库构建完成!")
     
     print("\n使用方法:")
