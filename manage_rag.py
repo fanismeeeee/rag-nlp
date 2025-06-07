@@ -20,7 +20,7 @@ def show_menu():
     print("4. 导入文档到知识库")
     print("5. 更新RAG代理使用本地模型")
     print("6. 启动问答系统（命令行）")
-    print("7. 启动原生Tk图形界面")
+    print("7. 启动现代化图形界面")
     print("8. 修复所有警告和错误")
     print("9. 修复NumPy兼容性问题")
     print("10. 使用全新修复版RAG代理")
@@ -59,7 +59,7 @@ def main():
         elif choice == "6":
             execute_script("rag_app.py", "启动命令行问答系统")
         elif choice == "7":
-            execute_script("simple_gui_pyside.py", "启动原生Tk图形界面")
+            execute_script("simple_gui_pyside.py", "启动现代化图形界面")
         elif choice == "8":
             execute_script("tools/fix_all_warnings.py", "修复所有警告和错误")
         elif choice == "9":

@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QTextEdit, QPushButton, QSplitter, QStatusBar,
     QMessageBox, QGroupBox, QProgressBar, QFileDialog, QDialog,
-    QListWidget, QDialogButtonBox, QListWidgetItem, QFrame
+    QListWidget, QDialogButtonBox, QListWidgetItem, QFrame, QComboBox
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSize
 from PySide6.QtGui import QFont, QIcon
@@ -357,6 +357,10 @@ class InitializeWorker(QThread):
     finished = Signal(object, str)  # agent对象, 状态消息
     error = Signal(str)  # 错误消息
     status_update = Signal(str)  # 状态更新
+    
+    def __init__(self, model_name="distiluse-base-multilingual-cased-v1"):
+        super().__init__()
+        self.model_name = model_name
 
     def run(self):
         try:
@@ -378,10 +382,11 @@ class InitializeWorker(QThread):
                 docs_dir=docs_dir,
                 persist_dir=db_dir,
                 api_base="https://api.ai-gaochao.cn/v1",
-                api_key="sk-LJnOebUUtdz3fZ5V2a3eD48a810c41BfBe7000183bCa0cCf"
+                api_key="sk-LJnOebUUtdz3fZ5V2a3eD48a810c41BfBe7000183bCa0cCf",
+                model_name=self.model_name
             )
 
-            self.finished.emit(agent, "知识库已成功加载！")
+            self.finished.emit(agent, f"知识库已成功加载！使用模型: {self.model_name}")
 
         except ImportError as e:
             error_msg = f"导入RAGAgent失败: {str(e)}。请先修复兼容性问题。"
@@ -404,10 +409,25 @@ class QueryWorker(QThread):
     def run(self):
         try:
             start_time = time.time()
-            response = self.agent.query(self.question)
+            response_dict = self.agent.query(self.question)
             end_time = time.time()
             query_time = end_time - start_time
-            self.finished.emit(response, query_time)
+            
+            # 从返回的字典中提取回答
+            if isinstance(response_dict, dict):
+                answer = response_dict.get("answer", "未能获取回答")
+                source_docs = response_dict.get("source_documents", [])
+                
+                # 如果有源文档，添加到回答中
+                if source_docs:
+                    answer += "\n\n来源文档:"
+                    for i, doc in enumerate(source_docs[:3], 1):  # 最多显示3个源文档
+                        source = doc.metadata.get("source", "未知来源") if hasattr(doc, "metadata") else "未知来源"
+                        answer += f"\n{i}. {os.path.basename(source)}"
+            else:
+                answer = str(response_dict)
+                
+            self.finished.emit(answer, query_time)
         except Exception as e:
             self.error.emit(f"查询出错: {str(e)}")
 
@@ -510,6 +530,28 @@ class SimpleRAGTkApp(QMainWindow):
         self.status_label = QLabel(self.status)
         self.status_label.setStyleSheet("color: #2196F3; font-weight: bold; padding: 5px;")
         status_layout.addWidget(self.status_label)
+        
+        # 模型选择
+        model_label = QLabel("嵌入模型:")
+        status_layout.addWidget(model_label)
+        
+        self.model_combo = QComboBox()
+        self.model_combo.addItem("distiluse-base-multilingual-cased-v1 (多语言)")
+        self.model_combo.addItem("all-MiniLM-L6-v2 (通用)")
+        self.model_combo.addItem("bert-base-chinese (中文专用)")
+        self.model_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 4px;
+                background: white;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+        """)
+        status_layout.addWidget(self.model_combo)
         
         # 进度条
         self.progress_bar = QProgressBar()
@@ -672,13 +714,26 @@ class SimpleRAGTkApp(QMainWindow):
         self.show_progress(True)
         self.init_btn.setEnabled(False)
 
+        # 获取选择的模型
+        selected_model = self.model_combo.currentText()
+        model_name = ""
+        
+        if "distiluse-base" in selected_model:
+            model_name = "distiluse-base-multilingual-cased-v1"
+        elif "all-MiniLM" in selected_model:
+            model_name = "all-MiniLM-L6-v2"
+        elif "bert-base-chinese" in selected_model:
+            model_name = "bert-base-chinese"
+        
+        self.update_status(f"正在使用模型 {model_name} 初始化...", "#FF9800")
+
         # 清理之前的线程
         if self.init_worker is not None:
             self.init_worker.quit()
             self.init_worker.wait()
 
         # 创建新的工作线程
-        self.init_worker = InitializeWorker()
+        self.init_worker = InitializeWorker(model_name=model_name)
         self.init_worker.finished.connect(self._on_initialize_finished)
         self.init_worker.error.connect(self._on_initialize_error)
         self.init_worker.status_update.connect(lambda msg: self.update_status(msg, "#FF9800"))

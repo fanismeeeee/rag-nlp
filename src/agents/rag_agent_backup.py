@@ -18,6 +18,9 @@ from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 # 导入新的文档加载器工具
 from src.utils.document_loaders import get_document_loader
 
+from sentence_transformers import SentenceTransformer, InputExample, losses, models
+from torch.utils.data import DataLoader
+
 class RAGAgent:
     def __init__(
         self, 
@@ -156,3 +159,39 @@ class RAGAgent:
             import shutil
             shutil.rmtree(self.persist_dir)
         self.vector_store = self._initialize_vector_store()
+
+    def finetune_embeddings(self, output_model_dir="models/domain-adapted", num_epochs=1, batch_size=16):
+        # 1. 收集训练对
+        train_examples = []
+        for doc in get_document_loader(self.docs_dir):
+            # 假设每个doc.page_content是一段文本
+            sentences = [s for s in doc.page_content.split('。') if len(s.strip()) > 5]
+            for i in range(len(sentences) - 1):
+                # 正例：相邻句子
+                train_examples.append(InputExample(texts=[sentences[i], sentences[i+1]], label=1.0))
+                # 负例：随机远距离句子
+                if i + 5 < len(sentences):
+                    train_examples.append(InputExample(texts=[sentences[i], sentences[i+5]], label=0.0))
+        if not train_examples:
+            print("未找到足够的训练对，微调终止。")
+            return
+
+        # 2. 加载基础模型
+        model = SentenceTransformer(self.model_name if 'sentence-transformers' in self.model_name else "bert-base-chinese")
+
+        # 3. 构建DataLoader
+        train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=batch_size)
+        train_loss = losses.CosineSimilarityLoss(model)
+
+        # 4. 微调
+        print(f"开始微调，训练对数：{len(train_examples)}")
+        model.fit(
+            train_objectives=[(train_dataloader, train_loss)],
+            epochs=num_epochs,
+            warmup_steps=100,
+            show_progress_bar=True
+        )
+
+        # 5. 保存模型
+        model.save(output_model_dir)
+        print(f"微调完成，模型已保存到: {output_model_dir}")
